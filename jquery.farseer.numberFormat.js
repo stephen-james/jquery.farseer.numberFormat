@@ -29,18 +29,21 @@ Farseer.NumberFormat = Farseer.NumberFormat || {
         
         var matchedNumberParts = String(valueToParse).match(this._matchNumericExp);
         
-        if (matchedNumberParts[1] == "-" || matchedNumberParts[3] == "-")
-        {
-            returnValue.sign = "negative";
-        }        
-        else
-        {
-            returnValue.sign = "positive";
+        if (matchedNumberParts)
+        {    
+            if (matchedNumberParts[1] == "-" || matchedNumberParts[3] == "-")
+            {
+                returnValue.sign = "negative";
+            }        
+            else
+            {
+                returnValue.sign = "positive";
+            }
+             
+            returnValue.prefix = matchedNumberParts[2];
+            returnValue.suffix = matchedNumberParts[5];        
+            returnValue.rawValue = matchedNumberParts[4];
         }
-         
-        returnValue.prefix = matchedNumberParts[2];
-        returnValue.suffix = matchedNumberParts[5];        
-        returnValue.rawValue = matchedNumberParts[4];
         
         return returnValue;
     },
@@ -88,7 +91,8 @@ Farseer.NumberFormat = Farseer.NumberFormat || {
         }
         else
         {
-            if (numericStringToNeutralise.match(this._commasOrPeriodsExp).length > 1)
+            var thousandDelimiterMatch = numericStringToNeutralise.match(this._commasOrPeriodsExp);
+            if (thousandDelimiterMatch && thousandDelimiterMatch.length > 1)
             {
                 // the number contains thousand seperator only, remove commas and periods
                 return numericStringToNeutralise.replace(this._commasOrPeriodsExp, '');                
