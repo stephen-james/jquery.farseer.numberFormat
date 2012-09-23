@@ -7,9 +7,15 @@ var Farseer = Farseer || {};
 
 Farseer.NumberFormat = Farseer.NumberFormat || {
     
+    _this : this,
+    
     _matchNumericExp : 
         // matches a numeric expression with selection groups for sign (pre or post prefix), prefix and suffix
         /(-)?\s?([\$£€a-zA-Z]+)?\s?(-)?(\d+[\d\.,]+)\s?([\$£€%a-zA-Z\\\/]+)?/, 
+    
+    _matchCurrency :
+        // matches currency, expand this to support any currency codes/symbols you need
+        /([\$£€]|USD|GBP|EUR)/,
     
     _commasOrPeriodsExp :
         // matches commas or periods
@@ -24,25 +30,36 @@ Farseer.NumberFormat = Farseer.NumberFormat || {
             suffix : "",
             rawValue : "",
             value : 0,
-            sign : ""
+            sign : "",
+            isCurrency : false,
+            isPercentage : false
         };
         
         var matchedNumberParts = String(valueToParse).match(this._matchNumericExp);
         
-        if (matchedNumberParts)
-        {    
-            if (matchedNumberParts[1] == "-" || matchedNumberParts[3] == "-")
-            {
+        if (matchedNumberParts) {    
+            if (matchedNumberParts[1] == "-" || matchedNumberParts[3] == "-") {
                 returnValue.sign = "negative";
             }        
-            else
-            {
+            else {
                 returnValue.sign = "positive";
             }
              
             returnValue.prefix = matchedNumberParts[2];
             returnValue.suffix = matchedNumberParts[5];        
             returnValue.rawValue = matchedNumberParts[4];
+            
+            // perform currency check
+            var currencyMatches = (returnValue.prefix + returnValue.suffix + "").match(this._matchCurrency);
+            if (currencyMatches != null) {
+                returnValue.isCurrency = currencyMatches.length > 1 && currencyMatches[1] !== null;
+            }
+            
+            // perform percentage check
+            var percentageMatch = (returnValue.prefix + returnValue.suffix + "").match(/%/);
+            if (percentageMatch) {
+                returnValue.isPercentage = true;
+            }
         }
         
         return returnValue;
@@ -117,7 +134,9 @@ Farseer.NumberFormat = Farseer.NumberFormat || {
             var neutralisedNumber = this._neutraliseLocale(parsedNumberParts.rawValue);
             if (neutralisedNumber !== undefined)
             {
-                parsedNumberParts.value = neutralisedNumber * ((parsedNumberParts.sign == "negative") ? -1 : 1);
+                parsedNumberParts.value = neutralisedNumber
+                                            * ((parsedNumberParts.sign == "negative") ? -1 : 1)
+                                            * (parsedNumberParts.isPercentage ? 0.01 : 1);
                 parseStatus = true;
             }
         }
